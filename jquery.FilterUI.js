@@ -9,9 +9,9 @@
 				if($this.opts.cookies){
 						$this = loadCookieValues($this);
 				}
-				console.log(this);
-				buildFilters($this);
 				
+				buildFilters($this);				
+				configureEventHandlers($this);
 		},
 		
 		getFilterValues: function (obj) {
@@ -20,7 +20,52 @@
 		
 	};
 
+	function  configureEventHandlers($this){
+	
+		$this.on("click", "li", function(event){
+			$(this).toggleClass('selected');
+			adjustFilters($(this));	
+		});	
+		
+	}
 
+	function adjustFilters(objLi){
+		
+		var type = objLi.parent().attr('data-type');
+		var value = objLi.attr('data-value');			
+	    //if required
+	    //multi select?
+		//filter children?
+		
+		var aFilterValues = getFilterListValues(type);		
+
+		//adjustChildrenFilters
+		$('.filterList[data-parent="'+type+'"] li').each(function(){		
+				
+			var parentvalue =  $(this).attr('data-parentvalue');
+						
+			if($.inArray(parentvalue , aFilterValues ) == -1){ // if parent value not selected
+				$('i', this).removeClass('icon-unselected icon-check-empty');
+				$(this).addClass('isHidden');				
+			} else {
+				$('i', this).removeClass('icon-unselected icon-check-empty');
+				$(this).removeClass('isHidden');
+			}
+			
+			adjustFilters($(this));
+		});
+		
+		 setFilterValues(type, aFilterValues );
+		 
+		
+
+	}
+	
+	function setFilterValues(type, values){
+		$.cookie('f_' + type , values);
+		oFilters[type].values = values;	
+		oFilters[type].active = $('.filterList[data-type="'+type+'"] li:not(.isHidden) i:.icon-unselected').size();	
+	}
 	
 	function buildFilters($this){
 		var sHtml = '',
@@ -32,8 +77,8 @@
 			options = [],
 			option = {};
 			
-		console.log('buildFilters');
-		console.log($this);
+		//console.log('buildFilters');
+		//console.log($this);
 		
 		sHtml += '<div class="fuiTitle"><span>'+$this.opts.title+'</span>';
 		
@@ -45,16 +90,20 @@
 		
 		for (i = 0; i < filters.length; i++){
 			filter = filters[i];
+			sFilters += '<div class="fui_' + filter.id + '" data-parentfilter="'+filter.parent+'">';
 			sFilters += '<div>' + filter.title + '</div>';
 			sFilters += '<ul>'; 
 			
+			//console.log(filter);
 			
 			options = filter.options;
 			for (j = 0; j < options.length; j++){
 				option = options[j];
-				sFilters += '<li class="" data-value="'+option.value+'">'+option.label+'</li>'; 
+				sFilters += '<li class=" '+option.default+' " data-parent="'+ option.parent +'" data-value="'+option.value+'">'+option.label+'</li>'; 
 			}
+			
 			sFilters += '</ul>' 
+			sFilters += '</div>';
 		}		
 		
 		

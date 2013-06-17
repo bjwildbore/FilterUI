@@ -15,7 +15,13 @@
 		var filter = {};
 		filter.title = 'Region';
 		filter.id = 'region';
-		filter.dictionary = [];
+		filter.required = false;
+		filter.multi = true;
+		filter.options = [
+			{value:1,label:'Northern',default:'selected'},
+			{value:2,label:'Central',default:''},
+			{value:3,label:'Southern',default:''}
+		];
 		filter.status = 0;
 		filter.values = 0;
 		filter.parent = '';		
@@ -25,7 +31,13 @@
 		filter = {};
 		filter.title = 'Location';
 		filter.id = 'location';
-		filter.dictionary = [];
+		filter.required = true;
+		filter.multi = false;
+		filter.options = [
+			{value:1,label:'Auckland',default:'selected',parent:'1'},
+			{value:2,label:'Palmy',default:'',parent:'2'},
+			{value:3,label:'Christchurch',default:'',parent:'3'}
+		];
 		filter.status = 0;
 		filter.values = 0;
 		filter.parent = 'region';
