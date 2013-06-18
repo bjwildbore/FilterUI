@@ -1,0 +1,38 @@
+body{font-family: "Segoe UI","Helvetica Neue", Helvetica, Arial, sans-serif;}
+
+.fuiFilters{
+	width:25%;
+	border:2px solid #ccc;
+	color:#222;
+}
+
+.fuiStatusButton{
+	float:right;
+}
+
+.fuiTitle{
+	background-color:#ddd;
+	color:#222;
+	padding:5px;
+	font-size:1.3em;
+}
+
+.fuiFilter>div{
+	background-color:#eee;
+	border-bottom:2px dashed #bbb;
+	padding:5px;
+}
+
+ul{padding:0;margin:0;}
+.fuiFilter li{color : #339933; padding: 3px 10px}
+.fuiFilter li:hover{background-color:#eee;}
+.fuiFilter .unselected{ color:#E51400}
+
+.fuiFilter div span{font-size:.8em; color:#666;}
+
+.isHidden{display:none;}
+.fuiFilter ul {list-style:none;}
+.fuiFilter li i{margin-right:5px;}
+li .fuiIconUnselected{display:none;}
+.unselected .fuiIconSelected{display:none;}
+.unselected .fuiIconUnselected{display:inline-block;}

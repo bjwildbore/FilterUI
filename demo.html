@@ -6,19 +6,23 @@
     <meta name="author" content="">
 	
     <script src="http://code.jquery.com/jquery-1.7.2.min.js"></script>
+	<script src="jquery.cookie.js"></script>
 	<script src="jQuery.FilterUI.js"></script>
+	<link href="jQuery.FilterUI.css" rel="stylesheet">
+	<link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.0/css/font-awesome.min.css" rel="stylesheet">
 	
 	<script>
+
 	
 		var aFilters = [];
 		
 		var filter = {};
 		filter.title = 'Region';
 		filter.id = 'region';
-		filter.required = false;
+		filter.required = true;
 		filter.multi = true;
 		filter.options = [
-			{value:1,label:'Northern',default:'selected'},
+			{value:1,label:'Northern',default:false},
 			{value:2,label:'Central',default:''},
 			{value:3,label:'Southern',default:''}
 		];
@@ -34,9 +38,12 @@
 		filter.required = true;
 		filter.multi = false;
 		filter.options = [
-			{value:1,label:'Auckland',default:'selected',parent:'1'},
-			{value:2,label:'Palmy',default:'',parent:'2'},
-			{value:3,label:'Christchurch',default:'',parent:'3'}
+			{value:1,label:'Auckland',default:false,parent:'1'},
+			{value:11,label:'Albany',default:false,parent:'1'},
+			{value:2,label:'Palmy',default:true,parent:'2'},
+			{value:23,label:'Vegas',default:true,parent:'2'},
+			{value:3,label:'Christchurch',parent:'3'},
+			{value:4,label:'Dunedin',parent:'3'}
 		];
 		filter.status = 0;
 		filter.values = 0;
@@ -44,8 +51,32 @@
 		
 		aFilters.push(filter);
 		
+		
+		
+		filter = {};
+		filter.title = 'Category';
+		filter.id = 'category';
+		filter.required = false;
+		filter.multi = false;
+		filter.options = [
+			{value:1,label:'a',default:false},
+			{value:11,label:'b',default:false},
+			{value:2,label:'c',default:true},
+			{value:23,label:'d',default:true},
+			{value:3,label:'e'},
+			{value:4,label:'f'}
+		];
+		filter.status = 0;
+		filter.values = 0;
+		filter.parent = '';
+		
+		aFilters.push(filter);		
+		
+		
+		
+		
 		$(document).ready(function()
-		{
+		{		
 			$('#myFilters').fui({filters:aFilters});
 		});
 	

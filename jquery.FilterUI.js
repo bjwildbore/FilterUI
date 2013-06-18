@@ -4,16 +4,15 @@
 	var methods = {
 		init : function( options ){
 			var $this = $(this);								
-				$this.opts = $.extend({}, $.fn.fui.defaults, options);	
+				$this.opts = $.extend({}, $.fn.fui.defaults, options);					
 				
-				if($this.opts.cookies){
-						$this = loadCookieValues($this);
-				}
+								
 				
+				$this.addClass('fuiFilters');
 				buildFilters($this);				
 				configureEventHandlers($this);
-		},
-		
+		},		
+
 		getFilterValues: function (obj) {
 				var $this = $(this);				
         }
@@ -21,65 +20,138 @@
 	};
 
 	function  configureEventHandlers($this){
-	
+		
 		$this.on("click", "li", function(event){
-			$(this).toggleClass('selected');
-			adjustFilters($(this));	
+			if (event.ctrlKey){
+				console.log("ctrl");
+				$(this).removeClass('unselected');
+				$(this).siblings().addClass('unselected');
+				adjustFilters($this,$(this),true);	
+			} else {
+			
+			/*
+			TODO:required:
+			console.log('isRequired', isRequired);
+			isRequired = filterObj.attr('data-required'),
+			
+			if( isRequired && $('.fuiFilter[data-type="'+type+'"] li:not(.isHidden):not(.unselected)').size() == 0){
+				//reset the filters
+				$('.filterList[data-type="'+type+'"] li i').toggleClass('icon-unselected icon-check-empty');
+			} else { 
+			*/
+			
+				$(this).toggleClass('unselected');
+				adjustFilters($this,$(this),true);	
+			}
 		});	
+
+		$this.on("click", ".fuiFilter > div", function(event){
+			console.log('barclick');
+			$(this).parent().children('ul').toggle('fast');
+		});	
+		
 		
 	}
 
-	function adjustFilters(objLi){
-		
-		var type = objLi.parent().attr('data-type');
-		var value = objLi.attr('data-value');			
+	function adjustFilters($this,objLi,isRootLiItem){
+		var filterObj = objLi.closest('.fuiFilter'),
+		type = filterObj.attr('data-type'),
+		value = objLi.attr('data-value');	
+					
 	    //if required
 	    //multi select?
 		//filter children?
 		
-		var aFilterValues = getFilterListValues(type);		
+
+
+		
+		var aFilterValues = getFilterListValues(type);
+		//console.log(type + ' ' + value + ' ' + aFilterValues);			
 
 		//adjustChildrenFilters
-		$('.filterList[data-parent="'+type+'"] li').each(function(){		
-				
-			var parentvalue =  $(this).attr('data-parentvalue');
-						
-			if($.inArray(parentvalue , aFilterValues ) == -1){ // if parent value not selected
-				$('i', this).removeClass('icon-unselected icon-check-empty');
-				$(this).addClass('isHidden');				
-			} else {
-				$('i', this).removeClass('icon-unselected icon-check-empty');
-				$(this).removeClass('isHidden');
-			}
+		$('.fuiFilter[data-parentfilter="'+type+'"] li[data-parent="'+value+'"]').each(function(){		
+			var $thisLi = $(this);
+			//console.log($this);
+			var parentvalue =  $thisLi.attr('data-parent');
+			//console.log(type,'parent value = ',parentvalue, value , $thisLi.text());	
 			
-			adjustFilters($(this));
-		});
+			if($.inArray(parentvalue , aFilterValues ) == -1){ // if parent value not selected
+				$thisLi.removeClass('unselected');
+				$thisLi.addClass('isHidden');				
+			} else {
+				$thisLi.removeClass('unselected');
+				$thisLi.removeClass('isHidden');
+			}			
+			adjustFilters($this,$thisLi,false);
+		});				
 		
-		 setFilterValues(type, aFilterValues );
-		 
+		setFilterValues(type, aFilterValues );		
 		
-
+		if(isRootLiItem){
+			changeFilterStatus($this);
+		} 
+		
 	}
 	
-	function setFilterValues(type, values){
-		$.cookie('f_' + type , values);
-		oFilters[type].values = values;	
-		oFilters[type].active = $('.filterList[data-type="'+type+'"] li:not(.isHidden) i:.icon-unselected').size();	
+	function changeFilterStatus($this){
+	
+		console.log('changeFilterStatus');
+		
+		var filters = $this.opts.filters,			
+			filter = {},
+			options = [],
+			option = {},
+			unselectedItems = '',
+			i = 0;
+		
+		for (i = 0; i < filters.length; i++){
+			filter = filters[i];			
+			unselectedItems = $('.fuiFilter[data-type="'+filter.id+'"] li:not(.isHidden).unselected').size();
+			console.log(filter.id , unselectedItems);
+			if(unselectedItems > 0){
+				$('.fuiFilter[data-type="'+filter.id+'"] span').text('('+ unselectedItems + ' unselected)');
+			} else {
+				$('.fuiFilter[data-type="'+filter.id+'"] span').text('');
+			}
+		}
+		
 	}
+
+	function setFilterValues(type, values) {		
+		$.cookie('fui_' + type , values);
+		//console.log ('cookie ' +$.cookie('fui_' + type))		
+    };		
+	
+	function getFilterListValues(dataType){		
+		var aReturn = [],
+		listItems = $('.fuiFilter[data-type="'+dataType+'"] li:not(.unselected)');
+		
+		listItems.each(function(){	
+			aReturn.push($(this).attr('data-value'));
+			aReturn.push($(this).text());			
+		});	
+		return aReturn;
+	}
+
+
+	
+	
 	
 	function buildFilters($this){
 		var sHtml = '',
 			sFilters = '',
 			i=0,
 			j=0,
+			applyDefaults = true,
+			cookieKey = '',	
+			cookieValues = '',
+			parentFilterValues = '',			
+			tmpValues = [],			
 			filters = $this.opts.filters,			
 			filter = {},
 			options = [],
-			option = {};
-			
-		//console.log('buildFilters');
-		//console.log($this);
-		
+			option = {};			
+	
 		sHtml += '<div class="fuiTitle"><span>'+$this.opts.title+'</span>';
 		
 		if($this.opts.allowDisable){
@@ -89,18 +161,61 @@
 		sHtml += '</div>';
 		
 		for (i = 0; i < filters.length; i++){
+			tmpValues = [];
 			filter = filters[i];
-			sFilters += '<div class="fui_' + filter.id + '" data-parentfilter="'+filter.parent+'">';
-			sFilters += '<div>' + filter.title + '</div>';
-			sFilters += '<ul>'; 
+			cookieKey = 'fui_' + filter.id;
+			cookieValues = $.cookie(cookieKey);	
 			
-			//console.log(filter);
+			if(cookieValues == null){				
+				$.cookie(cookieKey, '');
+				cookieValues = [];				
+			} else {			
+				applyDefaults = false;
+				cookieValues = cookieValues.split(',');								
+			}
+			
+			sFilters += '<div class="fuiFilter" data-required="' + filter.required + '" data-type="' + filter.id + '" data-parentfilter="'+filter.parent+'">';
+			sFilters += '<div>' + filter.title + ' <span class="liStatus"></span></div>';
+			sFilters += '<ul>';			
 			
 			options = filter.options;
+			
+			parentFilterValues = $.cookie('fui_'+filter.parent);
+			
+			if(parentFilterValues !== null){						
+					parentFilterValues = parentFilterValues.split(',');	
+			}
+				
 			for (j = 0; j < options.length; j++){
 				option = options[j];
-				sFilters += '<li class=" '+option.default+' " data-parent="'+ option.parent +'" data-value="'+option.value+'">'+option.label+'</li>'; 
+				sFilters += '<li class="';
+				
+				if(filter.parent != "" ){					
+					if($.inArray(''+option.parent , parentFilterValues ) == -1   ){							
+						sFilters += ' isHidden ';						
+					}
+				}		
+
+				if(applyDefaults){				
+					if(option.default === false){
+						sFilters += ' unselected ';
+					} else {
+						tmpValues.push(option.value);
+					}					
+				} else {
+					if( $.inArray(''+option.value , cookieValues ) == -1   ){
+						
+						sFilters += 'unselected';						
+					} else {
+						
+						tmpValues.push(option.value);
+					}
+					
+				}
+				sFilters +='" data-parent="'+ option.parent +'" data-value="'+option.value+'"><i class="fuiIconSelected '+$this.opts.iconSelectedClass+'"></i><i class="fuiIconUnselected '+$this.opts.iconUnselectedClass+'"></i>'+option.label+'</li>'; 
 			}
+			
+			$.cookie(cookieKey, tmpValues);
 			
 			sFilters += '</ul>' 
 			sFilters += '</div>';
@@ -109,150 +224,18 @@
 		
 		
 		$this.append(sHtml + sFilters);
-		
+		changeFilterStatus($this);
 		/*
 		$(".btnFilterReset").click(function(e) {
 		    console.log('btnFilterReset' );
 			clearBrowserCache();
 		});
-				
-		loadOptionsFromArray(oFilters.region.dictionary,'cfRegion','');		
-		loadOptionsFromArray(oFilters.location.dictionary ,'cfLocation','regionID');
-		
-		loadOptionsFromArray(oFilters.tutor.dictionary ,'cfTutor','');
-		loadOptionsFromArray(oFilters.type.dictionary ,'cfType','');
-		loadOptionsFromArray(oFilters.status.dictionary ,'cfStatus','');
 		*/
 			
 	}// end buildFilters function
 	
-	
-
-/*
-	function loadOptionsFromArray(aArray,id,parentFilterValueField){
-		
-		var sTmp = "";
-
-		for (var i = 0; i < aArray.length; i++){		
-		
-			sTmp +=	"<li data-value='"+aArray[i].id+"'  ";
-			if(parentFilterValueField!=""){			
-				sTmp +=	" data-parentvalue='"+aArray[i][parentFilterValueField]+"' class='isHidden' ";
-			}
-			sTmp +="><i class='icon icon-check icon-unselected icon-check-empty'></i>"+aArray[i].title+"</li>";			
-		}
-		
-		
-    	$(sTmp).appendTo("#"+id);
-		
-	}
 
 
-
-		
-	// loads any previous settings for the filters from the browser cookies... prevents users having to reenter any
-	// filter values if they navigate away from the page on accident.
-	function applyCookiesToFilters(){		
-		
-		checkSetParameterCookie("region");	
-		checkSetParameterCookie("location");
-		checkSetParameterCookie("tutor");
-		checkSetParameterCookie("type");
-		checkSetParameterCookie("status");
-		checkSetParameterCookie("options");
-		
- 	}
-
-
-	function checkSetParameterCookie(id){	
-		
-		var key = 'f_' + id,
-		aFilterValues = [],
-		aCookieValue = [],
-		cookieValue = "",		
-		i = 0;
-		
-		
-		if ($.cookie(key) == null) { 	
-			$.cookie(key ,''); 	
-			console.log('found null value');		
-		} else {
-			cookieValue = $.cookie(key);
-		}
-		
-		
-		console.log(key);
-		console.log(cookieValue);
-		aCookieValue = cookieValue.split(',') ;			
-		
-		if(cookieValue.length){				
-			for (i = 0; i < aCookieValue.length; i++){				
-				$('.filterList[data-type="'+id+'"] li[data-value="'+aCookieValue[i]+'"] i').removeClass('icon-unselected icon-check-empty');
-				$('.filterList[data-parent="'+id+'"] li[data-parentvalue="'+aCookieValue[i]+'"]').removeClass('isHidden');
-			}
-			setFilterValues(id, aCookieValue );
-
-			
-		} else {
-			$('.filterList[data-type="'+id+'"] li i').removeClass('icon-unselected icon-check-empty');
-			$('.filterList[data-parent="'+id+'"] li').removeClass('isHidden');
-			
-			aFilterValues = getFilterListValues(id);	
-			setFilterValues(id, aCookieValue );
-		}			
-
-			
-	}
-
-
-
-
-
-	function clearBrowserCache(){
-		
-	    $.jStorage.flush();
-		$.cookie("f_region","");
-		
-		$.cookie("f_tutor","");
-		$.cookie("f_location","");		
-		$.cookie("f_status","");
-		$.cookie("f_type","");
-		$.cookie("f_options","");	
-	  
-	    location.reload(true);	  	
-	}
-	
-	
-	*/
-	
-	
-	function clearCookies($this){	
-		console.log('TODO: clearCookies');
-	}
-	
-	function resetToCookies($this){	
-		console.log('TODO: resetToCookies');
-	}
-	
-	function resetToDefaults($this){
-		console.log('TODO: resetToDefaults');
-	}
-	
-	function loadCookieValues($this){
-		console.log('TODO: loadCookieValues');
-		return $this;
-	}
-
-	function updateCookies($this){
-		console.log('TODO: updateCookies');
-		return $this;
-	}	
-	
-	
-	
-	
-	
-	
 	$.fn.fui = function(method) { 
 		if ( methods[method] ) {
 			return methods[method].apply( this, Array.prototype.slice.call( arguments, 1 ));
@@ -266,9 +249,10 @@
 	// plugin defaults - added as a property on our plugin function
 	$.fn.fui.defaults = {		
 		title: 'Filters',
-		filters: [],			
-		cookies: true,
+		filters: [],
 		autosetCookies: true,
+		iconSelectedClass: 'icon-check-sign',
+		iconUnselectedClass: 'icon-check-empty',
 		status: true,
 		allowDisable: true,
 		onFilterChange: function(){return true}		
