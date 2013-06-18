@@ -24,79 +24,74 @@
 		$this.on("click", "li", function(event){
 			var isRequired = false,
 			type='',
-			items = [],
-			thisLi = $(this);
-			if (event.ctrlKey){
-				console.log("ctrl");
-				thisLi.removeClass('unselected');
-				thisLi.siblings().addClass('unselected');
-				adjustFilters($this,thisLi,true);	
-			} else {
-				isRequired = thisLi.closest('.fuiFilter').attr('data-required');
-				type = thisLi.closest('.fuiFilter').attr('data-type');			
-				items = $('.fuiFilter[data-type="'+type+'"] li:not(.unselected):not(.isHidden)').size();
-				console.log(isRequired);
-				
-				if(isRequired == 'true' && items <= 1 ){
+			items = [],			
+			thisLi = $(this),
+			filter = thisLi.closest('.fuiFilter');
+			//todo add code for radio here
+			if(filter.attr('data-multi') == 'true'){
+				if (event.ctrlKey){				
 					thisLi.removeClass('unselected');
+					thisLi.siblings().addClass('unselected');				
 				} else {
-					thisLi.toggleClass('unselected');
-					adjustFilters($this,thisLi,true);	
+					isRequired = filter.attr('data-required');
+					type = filter.attr('data-type');			
+					items = $('.fuiFilter[data-type="'+type+'"] li:not(.unselected):not(.isHidden)').size();
+									
+					if(isRequired == 'true' && items <= 1 ){					
+						thisLi.removeClass('unselected');					
+					} else {
+						thisLi.toggleClass('unselected');						
+					}						
 				}
-			/*
-			TODO:required:
-			console.log('isRequired', isRequired);
-			isRequired = filterObj.attr('data-required'),
-			
-			if( isRequired && $('.fuiFilter[data-type="'+type+'"] li:not(.isHidden):not(.unselected)').size() == 0){
-				//reset the filters
-				$('.filterList[data-type="'+type+'"] li i').toggleClass('icon-unselected icon-check-empty');
-			} else { 
-			*/
-			
-				
+			} else {
+				thisLi.removeClass('unselected');
+				thisLi.siblings().addClass('unselected');							
 			}
+			
+			adjustFilters($this,thisLi,true);				
+
 		});	
 
 		$this.on("click", ".fuiFilter > div", function(event){
 			console.log('barclick');
 			$(this).parent().children('ul').toggle('fast');
-		});	
-		
+		});		
 		
 	}
 
 	function adjustFilters($this,objLi,isRootLiItem){
-		var filterObj = objLi.closest('.fuiFilter'),
-		type = filterObj.attr('data-type'),
-		value = objLi.attr('data-value');	
-					
-	    //if required
+		var filter = objLi.closest('.fuiFilter'),
+		type = filter.attr('data-type'),		
+		value = objLi.attr('data-value');					
+	    
 	    //multi select?
 		//filter children?
 		
-
-
-		
-		var aFilterValues = getFilterListValues(type);
-		//console.log(type + ' ' + value + ' ' + aFilterValues);			
+		var aFilterValues = getFilterListValues(type);				
 
 		//adjustChildrenFilters
 		$('.fuiFilter[data-parentfilter="'+type+'"] li[data-parent="'+value+'"]').each(function(){		
 			var $thisLi = $(this);
-			//console.log($this);
+			var multi = $thisLi.closest('.fuiFilter').attr('data-multi'); 
 			var parentvalue =  $thisLi.attr('data-parent');
-			//console.log(type,'parent value = ',parentvalue, value , $thisLi.text());	
+			var unselectedItems = 0;
 			
-			if($.inArray(parentvalue , aFilterValues ) == -1){ // if parent value not selected
+			if($.inArray(parentvalue , aFilterValues ) == -1){ // if parent value not selected Hide Options
 				$thisLi.removeClass('unselected');
 				$thisLi.addClass('isHidden');				
 			} else {
-				$thisLi.removeClass('unselected');
 				$thisLi.removeClass('isHidden');
+				
+				if(multi == "false"){
+					$thisLi.addClass('unselected');									
+				} else {
+					$thisLi.removeClass('unselected');					
+				}				
 			}			
 			adjustFilters($this,$thisLi,false);
-		});				
+		});	
+		
+		//todo: check for children all unselected and check the first one
 		
 		setFilterValues(type, aFilterValues );		
 		
@@ -118,13 +113,15 @@
 			i = 0;
 		
 		for (i = 0; i < filters.length; i++){
-			filter = filters[i];			
-			unselectedItems = $('.fuiFilter[data-type="'+filter.id+'"] li:not(.isHidden).unselected').size();
-			//console.log(filter.id , unselectedItems);
-			if(unselectedItems > 0){
-				$('.fuiFilter[data-type="'+filter.id+'"] span').text('('+ unselectedItems + ' unselected)');
-			} else {
-				$('.fuiFilter[data-type="'+filter.id+'"] span').text('');
+			filter = filters[i];	
+			if(filter.multi){			
+				unselectedItems = $('.fuiFilter[data-type="'+filter.id+'"] li:not(.isHidden).unselected').size();
+				//console.log(filter.id , unselectedItems);
+				if(unselectedItems > 0){
+					$('.fuiFilter[data-type="'+filter.id+'"] span').text('('+ unselectedItems + ' unselected)');
+				} else {
+					$('.fuiFilter[data-type="'+filter.id+'"] span').text('');
+				}
 			}
 		}
 		
@@ -158,6 +155,8 @@
 			applyDefaults = true,
 			cookieKey = '',	
 			cookieValues = '',
+			selectedIcon = '',
+			unselectedIcon = '',
 			parentFilterValues = '',			
 			tmpValues = [],			
 			filters = $this.opts.filters,			
@@ -178,6 +177,13 @@
 			filter = filters[i];
 			cookieKey = 'fui_' + filter.id;
 			cookieValues = $.cookie(cookieKey);	
+			if(filter.multi){
+				selectedIcon = $this.opts.checkSelectedClass;
+				unselectedIcon = $this.opts.checkUnselectedClass;
+			} else {
+				selectedIcon = $this.opts.radioSelectedClass;
+				unselectedIcon = $this.opts.radioUnselectedClass;
+			}
 			
 			if(cookieValues == null){				
 				$.cookie(cookieKey, '');
@@ -187,7 +193,7 @@
 				cookieValues = cookieValues.split(',');								
 			}
 			
-			sFilters += '<div class="fuiFilter" data-required="' + filter.required + '" data-type="' + filter.id + '" data-parentfilter="'+filter.parent+'">';
+			sFilters += '<div class="fuiFilter" data-multi="' + filter.multi + '" data-required="' + filter.required + '" data-type="' + filter.id + '" data-parentfilter="'+filter.parent+'">';
 			sFilters += '<div>' + filter.title + ' <span class="liStatus"></span></div>';
 			sFilters += '<ul>';			
 			
@@ -216,16 +222,19 @@
 						tmpValues.push(option.value);
 					}					
 				} else {
-					if( $.inArray(''+option.value , cookieValues ) == -1   ){
-						
+					if( $.inArray(''+option.value , cookieValues ) == -1   ){						
 						sFilters += 'unselected';						
-					} else {
-						
+					} else {						
 						tmpValues.push(option.value);
 					}
 					
 				}
-				sFilters +='" data-parent="'+ option.parent +'" data-value="'+option.value+'"><i class="fuiIconSelected '+$this.opts.iconSelectedClass+'"></i><i class="fuiIconUnselected '+$this.opts.iconUnselectedClass+'"></i>'+option.label+'</li>'; 
+				sFilters +='" ';
+				sFilters +='data-parent="'+ option.parent +'" ';
+				sFilters +='data-value="'+option.value+'">';
+				sFilters +='<i class="fuiIconSelected '+selectedIcon+'"></i>';
+				sFilters +='<i class="fuiIconUnselected '+unselectedIcon+'"></i>';
+				sFilters += option.label+'</li>'; 
 			}
 			
 			$.cookie(cookieKey, tmpValues);
@@ -264,8 +273,10 @@
 		title: 'Filters',
 		filters: [],
 		autosetCookies: true,
-		iconSelectedClass: 'icon-check-sign',
-		iconUnselectedClass: 'icon-check-empty',
+		radioSelectedClass: 'icon-ok-circle',
+		radioUnselectedClass: 'icon-circle-blank',
+		checkSelectedClass: 'icon-check-sign',
+		checkUnselectedClass: 'icon-check-empty',		
 		status: true,
 		allowDisable: true,
 		onFilterChange: function(){return true}		
