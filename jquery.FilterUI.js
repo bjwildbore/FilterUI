@@ -22,13 +22,27 @@
 	function  configureEventHandlers($this){
 		
 		$this.on("click", "li", function(event){
+			var isRequired = false,
+			type='',
+			items = [],
+			thisLi = $(this);
 			if (event.ctrlKey){
 				console.log("ctrl");
-				$(this).removeClass('unselected');
-				$(this).siblings().addClass('unselected');
-				adjustFilters($this,$(this),true);	
+				thisLi.removeClass('unselected');
+				thisLi.siblings().addClass('unselected');
+				adjustFilters($this,thisLi,true);	
 			} else {
-			
+				isRequired = thisLi.closest('.fuiFilter').attr('data-required');
+				type = thisLi.closest('.fuiFilter').attr('data-type');			
+				items = $('.fuiFilter[data-type="'+type+'"] li:not(.unselected):not(.isHidden)').size();
+				console.log(isRequired);
+				
+				if(isRequired == 'true' && items <= 1 ){
+					thisLi.removeClass('unselected');
+				} else {
+					thisLi.toggleClass('unselected');
+					adjustFilters($this,thisLi,true);	
+				}
 			/*
 			TODO:required:
 			console.log('isRequired', isRequired);
@@ -40,8 +54,7 @@
 			} else { 
 			*/
 			
-				$(this).toggleClass('unselected');
-				adjustFilters($this,$(this),true);	
+				
 			}
 		});	
 
@@ -95,7 +108,7 @@
 	
 	function changeFilterStatus($this){
 	
-		console.log('changeFilterStatus');
+		//console.log('changeFilterStatus');
 		
 		var filters = $this.opts.filters,			
 			filter = {},
@@ -107,7 +120,7 @@
 		for (i = 0; i < filters.length; i++){
 			filter = filters[i];			
 			unselectedItems = $('.fuiFilter[data-type="'+filter.id+'"] li:not(.isHidden).unselected').size();
-			console.log(filter.id , unselectedItems);
+			//console.log(filter.id , unselectedItems);
 			if(unselectedItems > 0){
 				$('.fuiFilter[data-type="'+filter.id+'"] span').text('('+ unselectedItems + ' unselected)');
 			} else {
