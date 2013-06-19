@@ -11,64 +11,55 @@
 	<link href="jQuery.FilterUI.css" rel="stylesheet">
 	<link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.0/css/font-awesome.min.css" rel="stylesheet">
 	
+	<style>
+		body{font-family: "Segoe UI","Helvetica Neue", Helvetica, Arial, sans-serif;}
+		.fuiFilters{
+			width:25%;
+			
+		}
+	</style>
+	
 	<script>
 
 	
 		var aFilters = [];
 		
-		var filter = {};
-		filter.title = 'Region';
-		filter.id = 'region';
-		filter.required = true;
-		filter.multi = true;
+		var filter = new fuiFilter('region','Region');
+		
 		filter.options = [
-			{value:1,label:'Northern',default:false},
-			{value:2,label:'Central',default:''},
-			{value:3,label:'Southern',default:''}
+			{value:1,label:'Northern',selected:false},
+			{value:2,label:'Central',selected:false},
+			{value:3,label:'Southern',selected:false}
 		];
-		filter.status = 0;
-		filter.values = 0;
-		filter.parent = '';		
 			
 		aFilters.push(filter);
 		
-		filter = {};
-		filter.title = 'Location';
-		filter.id = 'location';
-		filter.required = true;
+		filter = new fuiFilter('location','Location');
 		filter.multi = false;
-		filter.options = [
-			{value:1,label:'Auckland',default:false,parent:'1'},
-			{value:11,label:'Albany',default:false,parent:'1'},
-			{value:2,label:'Palmy',default:true,parent:'2'},
-			{value:23,label:'Vegas',default:true,parent:'2'},
-			{value:3,label:'Christchurch',parent:'3'},
-			{value:4,label:'Dunedin',parent:'3'}
-		];
-		filter.status = 0;
-		filter.values = 0;
 		filter.parent = 'region';
-		
-		aFilters.push(filter);
-		
-		
-		
-		filter = {};
-		filter.title = 'Category';
-		filter.id = 'category';
-		filter.required = true;
-		filter.multi = false;
 		filter.options = [
-			{value:1,label:'a',default:false},
-			{value:11,label:'b',default:false},
-			{value:2,label:'c',default:true},
-			{value:23,label:'d',default:true},
+			{value:'akl',label:'Auckland',selected:false,parent:'1'},
+			{value:'alb',label:'Albany',selected:false,parent:'1'},
+			{value:'pmr',label:'Palmy',selected:true,parent:'2'},
+			{value:'wan',label:'Vegas',selected:true,parent:'2'},
+			{value:'cch',label:'Christchurch',parent:'3'},
+			{value:'dnd',label:'Dunedin',parent:'3'}
+		];		
+		
+		aFilters.push(filter);		
+		
+		filter = new fuiFilter('category','Category');
+		filter.required = false;
+		filter.multi = false;	
+		filter.unneededVariable = "test";		
+		filter.options = [
+			{value:1,label:'a',selected:false},
+			{value:11,label:'b',selected:true},
+			{value:2,label:'c',selected:true},
+			{value:23,label:'d',selected:true},
 			{value:3,label:'e'},
 			{value:4,label:'f'}
 		];
-		filter.status = 0;
-		filter.values = 0;
-		filter.parent = '';
 		
 		aFilters.push(filter);		
 		
@@ -77,7 +68,14 @@
 		
 		$(document).ready(function()
 		{		
-			$('#myFilters').fui({filters:aFilters});
+			$('#myFilters').fui({	
+				filters:aFilters,
+				onFilterClick: function(){
+					console.log('callbackfunc onFilterClick')
+				}
+			});
+			console.log('getFilterValues');
+			console.log($('#myFilters').fui('getFilterValues'));
 		});
 	
 	</script>
