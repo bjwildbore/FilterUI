@@ -287,7 +287,7 @@
 	}// end applyCookiesAndDefaults function	
 	
 	function checkRequiredFilters($this){
-		var $requiredFilters = $('#"'+$this.attr('id')+'"][data-required="true"]') ;
+		var $requiredFilters = $('#'+$this.attr('id')+'[data-required="true"]') ;
 		
 		$requiredFilters.each(function(){
 			var $thisFilter = $(this);
@@ -382,7 +382,7 @@
 		enabledClass:  'icon-circle',	
 		disabledClass: 'icon-ban-circle',			
 		status: true,
-		allowDisable: true,
+		allowDisable: false,
 		enabled: true,
 		onFilterClick: function(){
 			return true;
